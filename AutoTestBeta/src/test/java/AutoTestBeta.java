@@ -1,5 +1,6 @@
 import java.io.File;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -98,8 +99,10 @@ public class AutoTestBeta {
 
     @Test (dependsOnMethods = {"AssetCreation"})
     public static void APIConnectionIsFunctional () {
+        ((JavascriptExecutor) browser).executeScript("window.scrollTo(0, document.body.scrollHeight)");
         browser.switchTo().frame(0);
         findAndClick("div[id='asset_entitlements_section_']");
+        ((JavascriptExecutor) browser).executeScript("window.scrollTo(0, document.body.scrollHeight)");
         WebDriverWait wait = new WebDriverWait(browser, 5);
         wait.until(ExpectedConditions.elementToBeClickable(
                 findElement("div[id='offlineGetCredentialsBtnAUTH2_button']"))).click();
