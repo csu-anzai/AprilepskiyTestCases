@@ -3,6 +3,8 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -39,78 +41,115 @@ public class AutoTestBeta {
     public static boolean elementExists(String cssSelector) {
         return browser.findElements(By.cssSelector(cssSelector)).size() != 0;
     }
-    // downloading attachment to dir
-    public static boolean isFileDownloaded(String fileName) {
-        boolean flag = false;
-        File dir = new File(uploadPath);
-        File[] dir_contents = dir.listFiles();
-
-        for (int i = 0; i < dir_contents.length; i++) {
-            if (dir_contents[i].getName().equals(fileName))
-                return flag = true;
-        }
-        return flag;
-    }
-    //getting md5
-    public static String getMD5 (String filePath) throws NoSuchAlgorithmException, IOException {
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        md.update(Files.readAllBytes(Paths.get(filePath)));
-        byte[] digest = md.digest();
-        return Arrays.toString(digest);
-    }
+//    // downloading attachment to dir
+//    public static boolean isFileDownloaded(String fileName) {
+//        boolean flag = false;
+//        File dir = new File(uploadPath);
+//        File[] dir_contents = dir.listFiles();
+//
+//        for (int i = 0; i < dir_contents.length; i++) {
+//            if (dir_contents[i].getName().equals(fileName))
+//                return flag = true;
+//        }
+//        return flag;
+//    }
+//    // getting md5
+//    public static String getMD5 (String filePath) throws NoSuchAlgorithmException, IOException {
+//        MessageDigest md = MessageDigest.getInstance("MD5");
+//        md.update(Files.readAllBytes(Paths.get(filePath)));
+//        byte[] digest = md.digest();
+//        return Arrays.toString(digest);
+//    }
     @BeforeTest
     public static void openBrowser() {
         System.setProperty("webdriver.chrome.driver", "chromedriver.exe");
         browser = new ChromeDriver();
         browser.manage().window().maximize();
         browser.manage().timeouts().implicitlyWait(20, TimeUnit.SECONDS);
-        browser.get("http://jira.hillel.it:8080/secure/Dashboard.jspa");
+        browser.get("http://my.skyfencenet.com");
     }
-    @AfterTest
-    public static void closeBrowser() {
-        browser.quit();
+//    @AfterTest
+//
+//    public static void closeBrowser() {
+//        browser.quit();
+//    }
+
+    @Test ()
+    public static void BetaLogin () {
+        findAndWrite("input[id='userName']", "andrii@qabeta2.com");
+        findAndWrite("input[id='userPassword']", "Barbapapa1@");
+        findAndClick("input[id='submitBtn']");
+        Assert.assertTrue(elementExists("div[class='global-page-img global-page__USER__img']"));
     }
-    @Test()
-    public static void jiraLogin() {
-        findAndWrite("input[name='os_username']", "aprilepskiy");
-        findAndWrite("input[name='os_password']", "Cent90308122");
-        findAndClick("input[id='login']");
-        Assert.assertTrue(elementExists("a[data-username]"));
+    @Test (dependsOnMethods = {"BetaLogin"})
+    public static void AssetCreation () throws InterruptedException {
+        findAndClick("div[class='global-page-img global-page__SETTINGS__img']");
+        browser.switchTo().frame(0);
+        WebDriverWait wait = new WebDriverWait(browser, 5);
+        wait.until(ExpectedConditions.elementToBeClickable(
+                findElement("div[class='add_button']"))).click();
+        findAndWrite("input[id='search_field']", "Box");
+        findAndClick("div[id='asset_type_box_BOX']");
+        findAndClick("div[id='next_btn']");
+        findAndWrite("input[id='assetNameInput']", "Box for auto tests");
+        findAndClick("div[id='next_btn']");
+        Thread.sleep(3000);
     }
-    @Test (dependsOnMethods = {"jiraLogin"})
-    public static void createIssue () throws InterruptedException {
-        findAndClick("a[id='browse_link']");
-        findAndClick("a[id='admin_main_proj_link_lnk']");
-        findAndClick("a[id='create_link']");
-        findAndWrite("input[class='text long-field']", newIssueSummary);
-        findAndWrite("input[id='assignee-field']", "Robert");
-        findAndClick("input[id='create-issue-submit']");
-        findElement("a.issue-created-key");
-        Assert.assertTrue(elementExists("a.issue-created-key"));
-        newIssueURL = findElement("a.issue-created-key").getAttribute("href");
+
+    @Test (dependsOnMethods = {"AssetCreation"})
+    public static void APIConnectionIsFunctional () {
+        browser.switchTo().frame(0);
+        findAndClick("div[id='asset_entitlements_section_']");
+        WebDriverWait wait = new WebDriverWait(browser, 5);
+        wait.until(ExpectedConditions.elementToBeClickable(
+                findElement("div[id='offlineGetCredentialsBtnAUTH2_button']"))).click();
+//        findAndClick("div[id='offlineGetCredentialsBtnAUTH2_button']");
+        findAndClick("div[id='confirmation_save_btn']");
+
+        String winHandleBefore = browser.getWindowHandle();
+        for(String winHandle : browser.getWindowHandles()) {
+            browser.switchTo().window(winHandle);
+        }
+        findAndWrite("input[id='login']","user1@skyromi.onmicrosoft.com");
+        findAndWrite("input[id='login']","Barbapapa1@3");
+        findAndClick("input[name='login_submit']");
+
+        browser.close();
+
+        browser.switchTo().window(winHandleBefore);
+
+
     }
-    @Test(dependsOnMethods = {"createIssue"})
-    public static void viewIssue () {
-        browser.get(newIssueURL);
-        Assert.assertEquals(newIssueSummary, findElement("h1#summary-val").getText());
+//        findAndClick("div[id='confirmation_save_btn']");
+//        findAndWrite("input[class='text long-field']", newIssueSummary);
+//        findAndWrite("input[id='assignee-field']", "Robert");
+//        findAndClick("input[id='create-issue-submit']");
+//        findElement("a.issue-created-key");
+//        Assert.assertTrue(elementExists("a.issue-created-key"));
+//        newIssueURL = findElement("a.issue-created-key").getAttribute("href");
     }
-    @Test(dependsOnMethods = {"createIssue"})
-    public static void createIssueAttachment() {
-        browser.get(newIssueURL);
-        findElement("input[class='issue-drop-zone__file ignore-inline-attach']").sendKeys(attachmentPath);
-        findElement("span[style='width: 100%;']");
-        browser.get(newIssueURL);
-        Assert.assertEquals(attachmentName, findElement("a[class='attachment-title']").getText());
-    }
-    @Test (dependsOnMethods = {"createIssueAttachment"})
-    public static void downloadIssueAttachment() throws InterruptedException, IOException, NoSuchAlgorithmException {
-        browser.get(newIssueURL);
-        findAndClick("div[class='attachment-thumb']");
-        Thread.sleep(5000);
-        findAndClick("a[id='cp-control-panel-download']");
-        Thread.sleep(5000);
-        Assert.assertTrue(isFileDownloaded(attachmentName),"File names don't match of file downloading failed!");
-        Assert.assertTrue(Objects.equals(getMD5(uploadPath + "/" + attachmentName), getMD5(attachmentPath)),"MD5 is incorrect!");
-        new File(uploadPath + "/" + attachmentName).delete();
-    }
-}
+//    @Test(dependsOnMethods = {"createIssue"})
+//    public static void viewIssue () {
+//        browser.get(newIssueURL);
+//        Assert.assertEquals(newIssueSummary, findElement("h1#summary-val").getText());
+//    }
+//    @Test(dependsOnMethods = {"createIssue"})
+//    public static void createIssueAttachment() {
+//        browser.get(newIssueURL);
+//        findElement("input[class='issue-drop-zone__file ignore-inline-attach']").sendKeys(attachmentPath);
+//        findElement("span[style='width: 100%;']");
+//        browser.get(newIssueURL);
+//        Assert.assertEquals(attachmentName, findElement("a[class='attachment-title']").getText());
+//    }
+//    @Test (dependsOnMethods = {"createIssueAttachment"})
+//    public static void downloadIssueAttachment() throws InterruptedException, IOException, NoSuchAlgorithmException {
+//        browser.get(newIssueURL);
+//        findAndClick("div[class='attachment-thumb']");
+//        Thread.sleep(5000);
+//        findAndClick("a[id='cp-control-panel-download']");
+//        Thread.sleep(5000);
+//        Assert.assertTrue(isFileDownloaded(attachmentName),"File names don't match of file downloading failed!");
+//        Assert.assertTrue(Objects.equals(getMD5(uploadPath + "/" + attachmentName), getMD5(attachmentPath)),"MD5 is incorrect!");
+//        new File(uploadPath + "/" + attachmentName).delete();
+//    }
+//}
